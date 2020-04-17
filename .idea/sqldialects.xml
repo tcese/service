@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SqlDialectMappings">
+    <file url="file://$USER_HOME$/Documents/SCM Tabelas/ascagendamento.sql" dialect="TSQL" />
+    <file url="file://$USER_HOME$/Documents/SCM Tabelas/funcionarios.sql" dialect="TSQL" />
+    <file url="file://$USER_HOME$/Documents/SCM Tabelas/scmfuncionarios.sql" dialect="TSQL" />
+    <file url="file://$USER_HOME$/Documents/SCM Tabelas/scmperfilusuario.sql" dialect="TSQL" />
+  </component>
+</project>

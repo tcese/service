@@ -1,0 +1,15 @@
+server:
+  port: 8080
+  production: false
+
+
+database:
+  server: "tce-v027"
+  schema: "dbSCM"
+  user: "aps_scm "
+  password: "aps_scm"
+
+
+
+repmode: db
+logfile: "main-log.txt"

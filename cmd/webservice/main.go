@@ -6,6 +6,7 @@ import (
 	chiMiddleware "github.com/go-chi/chi/middleware"
 	"github.com/spf13/viper"
 	"service"
+	"service/agendamento"
 	"service/middleware"
 	"service/servidor"
 
@@ -89,8 +90,8 @@ func main() {
 		logger := log.New(log.Writer(), "servidor.Repository ", log.Flags())
 		switch config.RepMode {
 		case "mock":
-			//sr = servidor.NewMockRepository(nil, *logger)
-			panic("parametro repomode=mock nao suportado no momento")
+			sr = servidor.NewMockRepository(nil, *logger)
+			//panic("parametro repomode=mock nao suportado no momento")
 		case "msmsql":
 			sr = servidor.NewMsmsqlRepository(config.Database.Server, config.Database.Schema, config.Database.User, config.Database.Password, *logger)
 			if sr == nil {
@@ -111,6 +112,38 @@ func main() {
 		logger := log.New(log.Writer(), "servidor.ChiController ", log.Flags())
 		cr := servidor.NewChiController(ss, *logger)
 		r.Mount("/servidor/", cr)
+
+	}
+	// -------------- END SERVIDOR --------------
+
+	// ---------------- AGENDAMENTO ----------------
+	// instanciar repositório
+	var ar agendamento.Repository
+	{
+		logger := log.New(log.Writer(), "servidor.Repository ", log.Flags())
+		switch config.RepMode {
+		case "mock":
+			ar = agendamento.NewMockRepository(nil, 0, *logger)
+		case "msmsql":
+			/*ar = agendamento.NewMsmsqlRepository(*db, *logger)
+			if ar == nil {
+				panic("fatal error opening msmsql db")
+			}*/
+		default:
+			panic("parametro repomode utilizado nao suportado para o serviço: servidor")
+		}
+	}
+	// instanciar servico
+	var as agendamento.Service
+	{
+		logger := log.New(log.Writer(), "servidor.Service ", log.Flags())
+		as = agendamento.NewInternalService(ar, *logger)
+	}
+	// instanciar rota
+	{
+		logger := log.New(log.Writer(), "servidor.ChiController ", log.Flags())
+		ar := agendamento.NewChiController(as, *logger)
+		r.Mount("/agendamento/", ar)
 
 	}
 	// -------------- END SERVIDOR --------------

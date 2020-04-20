@@ -11,5 +11,5 @@ database:
 
 
 
-repmode: db
+repmode: mock
 logfile: "main-log.txt"

@@ -29,8 +29,7 @@ func NewChiController(
 		// Assume if we've reach this far, we can access the article
 		// context because this handler is a child of the ArticleCtx
 		// middleware. The worst case, the recoverer middleware will save us.
-		//article := r.Context().Value("article").(*Article)
-
+		//article := r.Context().Value("servidor").(*Servidor)
 		if err := render.Render(w, r, NewServidoresResponse(&s)); err != nil {
 			logger.Println(err)
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -60,11 +59,10 @@ func NewChiController(
 
 		logger.Printf("encontrado servidor: %v", s.Nome)
 
-		// Assume if we've reach this far, we can access the article
-		// context because this handler is a child of the ArticleCtx
+		// Assume if we've reach this far, we can access the SErvidor
+		// context because this handler is a child of the ServidorCtx
 		// middleware. The worst case, the recoverer middleware will save us.
-		//article := r.Context().Value("article").(*Article)
-
+		//article := r.Context().Value("servidor").(*Servidor)
 		if err := render.Render(w, r, NewServidorResponse(&s)); err != nil {
 			logger.Println(err)
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)

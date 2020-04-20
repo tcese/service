@@ -2,8 +2,8 @@ package agendamento
 
 import (
 	"errors"
+	"fmt"
 	"log"
-	"time"
 )
 
 type mockRepository struct {
@@ -17,15 +17,8 @@ func NewMockRepository(
 	idAgendamento int64,
 	logger log.Logger,
 ) Repository {
-	if agendamentos == nil {
-		agendamentos = &Agendamentos{
-			Agendamento{1, 0, 1, 0, 1, time.Date(2020, time.July, 11, 9, 30, 0, 0, time.UTC), 0, "0", 0, 0, "P", nil, "0"},
-			Agendamento{2, 0, 1, 0, 2, time.Date(2020, time.July, 15, 9, 00, 0, 0, time.UTC), 0, "0", 0, 0, "P", nil, "0"},
-			Agendamento{3, 0, 1, 0, 3, time.Date(2020, time.July, 20, 10, 30, 0, 0, time.UTC), 0, "0", 0, 0, "P", nil, "0"},
-		}
-	}
 	if idAgendamento == 0 {
-		idAgendamento = int64(len(*agendamentos)) + 1
+		idAgendamento = int64(len(*agendamentos))
 	}
 	return &mockRepository{agendamentos: *agendamentos, idAgendamento: idAgendamento, logger: logger}
 }
@@ -55,7 +48,7 @@ func (m *mockRepository) atualizarAgendamento(index int, a *Agendamento) error {
 func (m *mockRepository) deletarAgendamento(index int) error {
 	m.logger.Printf("deletando agendamento: %d", index)
 	if index > len(m.agendamentos) {
-		return errors.New("index maior que o tamanho da lista de agendamendos para deletar")
+		return fmt.Errorf("index %d maior que o tamanho %d da lista de agendamendos para deletar", index, len(m.agendamentos))
 	}
 	m.agendamentos = append(m.agendamentos[:index], m.agendamentos[index+1:]...)
 	return nil
@@ -85,7 +78,7 @@ func (m *mockRepository) InserirAgendamento(a *Agendamento) error {
 func (m *mockRepository) AtualizarAgendamento(idAgendamento int64, a *Agendamento) error {
 	if idAgendamento != a.IdAgendamento {
 		m.logger.Printf("idAgendamento diferente: %v != %v", idAgendamento, a.IdAgendamento)
-		return errors.New("idAgendamento do caminho diferente do idAgendamento do objeto passado")
+		return fmt.Errorf("idAgendamento %d do caminho diferente do idAgendamento %d do objeto passado", idAgendamento, a.IdAgendamento)
 	}
 	m.logger.Printf("mock buscando agendamento: %d", idAgendamento)
 	ag := Agendamento{}
@@ -94,7 +87,7 @@ func (m *mockRepository) AtualizarAgendamento(idAgendamento int64, a *Agendament
 		return err
 	}
 	if i == -1 {
-		return errors.New("Agendamento não encontrado na base")
+		return fmt.Errorf("Agendamento %d não encontrado na base", idAgendamento)
 	}
 	return m.atualizarAgendamento(i, a) // atualizando a lista
 }
@@ -107,7 +100,7 @@ func (m *mockRepository) DeletarAgendamento(idAgendamento int64) error {
 		return err
 	}
 	if i == -1 {
-		return errors.New("Agendamento não encontrado na base")
+		return fmt.Errorf("Agendamento id %d não encontrado na base", idAgendamento)
 	}
 	return m.deletarAgendamento(i)
 }

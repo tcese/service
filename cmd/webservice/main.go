@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"github.com/go-chi/chi"
 	chiMiddleware "github.com/go-chi/chi/middleware"
 	"github.com/spf13/viper"
@@ -19,53 +20,82 @@ import (
 )
 
 func main() {
+	var config service.Config
+	var db *sql.DB
 
-	// Set the file name of the configurations file
+	// Configurando o nome, o caminho e a extensão do arquivo config
 	viper.SetConfigName("config")
-	// Set the path to look for the configurations file
 	viper.AddConfigPath(".")
-	// The type of the config file
 	viper.SetConfigType("yml")
-	// Enable VIPER to read Environment Variables
+	// Habilitando VIPER para ler as Variáveis de Ambiente
 	viper.AutomaticEnv()
 
-	var config service.Config
-
 	if err := viper.ReadInConfig(); err != nil {
-		fmt.Printf("viper error reading config file: %v", err)
-		panic("review the config.yml file.")
+		fmt.Println("viper erro lendo arquivo config: ", err)
+		panic("revise o arquivo config")
 	}
 
-	// Set undefined variables
+	// Set undefined variables - NÃO USADO AINDA
 	//viper.SetDefault("database.dbname", "test_db")
 
 	err := viper.Unmarshal(&config)
 	if err != nil {
-		fmt.Printf("viper unable to decode into struct: %v", err)
+		fmt.Println("viper erro ao ler a estrutura do arquivo de configuração: ", err)
+		panic("revise a estrutura do arquivo config.")
 	}
 
-	// Reading variables using the model
-	fmt.Println("Reading variables using the model..")
-	fmt.Println("Database server is\t", config.Database.Server)
-	fmt.Println("Database name is\t", config.Database.Schema)
-	fmt.Println("Port is\t\t\t", config.Server.Port)
-	fmt.Println("Production is\t", config.Server.Production)
-	fmt.Println("RepMode is\t\t", config.RepMode)
-	fmt.Println("LogFile is\t\t", config.LogFile)
+	fmt.Println("Lendo as variáveis contidas no arquivo de configuração")
+	fmt.Println("Database server \t", config.Database.Server)
+	fmt.Println("Database name \t", config.Database.Schema)
+	fmt.Println("Port \t\t\t", config.Server.Port)
+	fmt.Println("Production \t", config.Server.Production)
+	fmt.Println("RepMode \t\t", config.RepMode)
+	fmt.Println("LogFile \t\t", config.LogFile)
 
-	// Setting log mode
+	// Enviando o log para o arquivo config.LogFile
 	if len(config.LogFile) > 0 {
 		// Enviando os erros para um arquivo
 		f, err := os.OpenFile(config.LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
-			log.Fatalf("error opening file: %v", err)
-		}
-		defer f.Close()
-		if f != nil {
-			log.Println("seting file as log output")
-			log.SetOutput(f)
+			fmt.Println("error abrindo o arquivo de log: ", err)
 		} else {
-			log.Println("seting terminal as log output")
+			defer f.Close()
+			if f != nil {
+				fmt.Println("configurando como saida do log o arquivo ", config.LogFile)
+				log.SetOutput(f)
+			}
+		}
+	}
+
+	// Abrindo a conexão com a Base de Dados
+	if config.RepMode == "db" {
+		// Conectando com a Base de Dados
+		dataSource := fmt.Sprintf("server=%s;user id=%s;password=%s;", config.Database.Server, config.Database.User, config.Database.Password)
+		db, err = sql.Open("mssql", dataSource)
+		if err != nil {
+			log.Fatalln(" erro conectando com a base:", err.Error())
+		}
+
+		err = db.Ping()
+		if err != nil {
+			log.Fatalln("falha na conexão com a base: ", err.Error())
+		}
+
+		defer db.Close()
+
+		// Testando a conexão com a base buscando a versão do MSSQL
+		rows, err := db.Query("select @@version")
+		if err != nil {
+			log.Fatalln("erro recuperando a versão da base: ", err.Error())
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var sqlversion string
+			err := rows.Scan(&sqlversion)
+			if err != nil {
+				log.Fatalln("erro ao ler a versão da base", err)
+			}
+			log.Println(sqlversion)
 		}
 	}
 
@@ -90,13 +120,9 @@ func main() {
 		logger := log.New(log.Writer(), "servidor.Repository ", log.Flags())
 		switch config.RepMode {
 		case "mock":
-			sr = servidor.NewMockRepository(nil, *logger)
-			//panic("parametro repomode=mock nao suportado no momento")
+			sr = servidor.NewMockRepository(servidor.NewMockServidores(), *logger)
 		case "msmsql":
-			sr = servidor.NewMsmsqlRepository(config.Database.Server, config.Database.Schema, config.Database.User, config.Database.Password, *logger)
-			if sr == nil {
-				panic("fatal error opening msmsql db")
-			}
+			sr = servidor.NewMsmsqlRepository(db, *logger)
 		default:
 			panic("parametro repomode utilizado nao suportado para o serviço: servidor")
 		}
@@ -123,7 +149,7 @@ func main() {
 		logger := log.New(log.Writer(), "servidor.Repository ", log.Flags())
 		switch config.RepMode {
 		case "mock":
-			ar = agendamento.NewMockRepository(nil, 0, *logger)
+			ar = agendamento.NewMockRepository(agendamento.NewMockAgendamentos(), 0, *logger)
 		case "msmsql":
 			/*ar = agendamento.NewMsmsqlRepository(*db, *logger)
 			if ar == nil {
@@ -144,16 +170,15 @@ func main() {
 		logger := log.New(log.Writer(), "servidor.ChiController ", log.Flags())
 		ar := agendamento.NewChiController(as, *logger)
 		r.Mount("/agendamento/", ar)
-
 	}
 	// -------------- END SERVIDOR --------------
 
 	// ----------- EXEMPLO DE ROTA LENTA -------------
 	r.Get("/slow", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("starting slow")
+		fmt.Println("iniciando rota lenta")
 		time.Sleep(15 * time.Second)
-		fmt.Println("finishing slow")
-		w.Write([]byte(fmt.Sprintf("all done.\n")))
+		fmt.Println("terminando rota lenta")
+		w.Write([]byte(fmt.Sprintf("tudo feito!\n")))
 	})
 
 	// --------------- SUBINDO O SERVIDOR --------------
@@ -163,34 +188,29 @@ func main() {
 	}
 
 	go func() {
-		fmt.Println("server starting...") // log to console
-		log.Println("server starting...") // log to file
-		// service connections
+		fmt.Println("iniciando servidor...") // na saida padrao
+		log.Println("iniciando servidor...") // no arquivo
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			fmt.Println("err listen:", err) // log to console
-			log.Fatalln("err listen:", err) // log to file
+			fmt.Println("err ouvindo:", err) // na saida padrao
+			log.Fatalln("err ouvindo:", err) // no arquivo
 		}
 	}()
 
 	// -------- DERRUBANDO O SERVIDOR EDUCADAMENTE -------
-
-	// sig is a ^C, handle it
+	// signais como ^C
+	// recebendo eles e saindo educadamente
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
-
-	fmt.Println("shutting down...") // log to console
-	log.Println("shutting down...") // log to file
-
-	// create context with timeout
+	fmt.Println("desligando...") // na saida padrao
+	log.Println("desligando...") // no arquivo
+	// criar contexto com timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-
 	if err := srv.Shutdown(ctx); err != nil {
-		fmt.Println("server shutdown:", err) // log to console
-		log.Fatalln("server shutdown:", err) // log to file
+		fmt.Println("servidor desligado:", err) // na saida padrao
+		log.Fatalln("servidor desligado:", err) // no arquivo
 	}
-
-	fmt.Println("server exiting") // log to console
-	log.Println("server exiting") // log to file
+	fmt.Println("fim.") // na saida padrao
+	log.Println("fim.") // no arquivo
 }

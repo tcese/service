@@ -2,7 +2,6 @@ package servidor
 
 import (
 	"database/sql"
-	"fmt"
 	_ "github.com/denisenkom/go-mssqldb"
 	"log"
 )
@@ -16,48 +15,10 @@ type msmsqlRepository struct {
 }
 
 func NewMsmsqlRepository(
-	server string,
-	schema string,
-	user string,
-	password string,
+	db *sql.DB,
 	logger log.Logger,
 ) Repository {
-
-	dataSource := fmt.Sprintf("server=%s;user id=%s;password=%s;", server, user, password)
-	db, err := sql.Open("mssql", dataSource)
-	if err != nil {
-		logger.Fatalln(" error open db:", err.Error())
-		return nil
-	}
-
-	err = db.Ping()
-	if err != nil {
-		logger.Fatalln("cannot connect: ", err.Error())
-		return nil
-	}
-
-	//defer db.Close()
-
-	var (
-		sqlversion string
-	)
-
-	rows, err := db.Query("select @@version")
-	if err != nil {
-		logger.Fatalln("error retrieving msmsql version", err.Error())
-		return nil
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		err := rows.Scan(&sqlversion)
-		if err != nil {
-			logger.Fatal(err)
-		}
-		logger.Println(sqlversion)
-	}
-
-	return &msmsqlRepository{db: db, server: server, schema: schema, user: user, logger: logger}
+	return &msmsqlRepository{db: db, logger: logger}
 }
 
 func (m msmsqlRepository) BuscarServidor(matricula int64, s *Servidor) error {

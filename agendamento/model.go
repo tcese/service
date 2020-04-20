@@ -19,3 +19,12 @@ type Agendamento struct {
 	DhCancelamento        *time.Time `json:"DhCancelamento"`     // ? can be null...
 	FlAtendido            string     `json:"Flatendido"`         // char(1) 0 or 1
 }
+
+// Retorna uma lista de Agendamentos já povoada para testes
+func NewMockAgendamentos() *Agendamentos {
+	return &Agendamentos{
+		Agendamento{0, 0, 1, 0, 1, time.Date(2020, time.July, 11, 9, 30, 0, 0, time.UTC), 0, "0", 0, 0, "P", nil, "0"},
+		Agendamento{1, 0, 3, 0, 2, time.Date(2020, time.July, 15, 9, 00, 0, 0, time.UTC), 0, "0", 0, 0, "P", nil, "0"},
+		Agendamento{2, 0, 2, 0, 3, time.Date(2020, time.July, 20, 10, 30, 0, 0, time.UTC), 0, "0", 0, 0, "P", nil, "0"},
+	}
+}

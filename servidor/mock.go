@@ -2,7 +2,6 @@ package servidor
 
 import (
 	"log"
-	"time"
 )
 
 type mockRepository struct {
@@ -14,13 +13,6 @@ func NewMockRepository(
 	servidores *Servidores,
 	logger log.Logger,
 ) Repository {
-	if servidores == nil {
-		servidores = &Servidores{
-			Servidor{1, "João", "M", time.Now(), 1, 1, "3344", 1, "OK", "A+", "S", "X", "Rua Conselheiro...", "10", "Capucho", 1, 12240000},
-			Servidor{2, "João", "M", time.Now(), 1, 1, "3344", 1, "OK", "A+", "S", "X", "Rua Conselheiro...", "10", "Capucho", 1, 12240000},
-			Servidor{3, "João", "M", time.Now(), 1, 1, "3344", 1, "OK", "A+", "S", "X", "Rua Conselheiro...", "10", "Capucho", 1, 12240000},
-		}
-	}
 	return &mockRepository{servidores: *servidores, logger: logger}
 }
 

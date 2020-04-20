@@ -2,72 +2,33 @@ package agendamento
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"log"
 	"os"
-	"service"
 	"testing"
 	"time"
 )
 
-var config service.Config
-var mock = &Agendamentos{
-	Agendamento{1, 0, 1, 0, 1, time.Date(2020, time.July, 11, 9, 30, 0, 0, time.UTC), 0, "0", 0, 0, "P", nil, "0"},
-	Agendamento{2, 0, 1, 0, 2, time.Date(2020, time.July, 15, 9, 00, 0, 0, time.UTC), 0, "0", 0, 0, "P", nil, "0"},
-	Agendamento{3, 0, 1, 0, 3, time.Date(2020, time.July, 20, 10, 30, 0, 0, time.UTC), 0, "0", 0, 0, "P", nil, "0"},
-}
-
 func TestMain(m *testing.M) {
 	// Enviando os erros para um arquivo
-	f, err := os.OpenFile("agendamento_test-log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile("service_test-log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		log.Fatalf("error opening file: %v", err)
+		log.Fatalln("erro ao abrir arquivo de log: ", err)
 	}
 	defer f.Close()
 	if f != nil {
 		log.SetOutput(f)
-		log.Println("seting file as log output..")
+		// Imprimindo a mensagem na saída padrão
+		fmt.Println("Saida do log direcionada para o arquivo service_test-log.txt")
+		// Imprimindo a mensagem no arquivo de log de test
 	}
-	log.Println("running tests")
-
-	// Set the file name of the configurations file
-	viper.SetConfigName("config_test")
-	// Set the path to look for the configurations file
-	viper.AddConfigPath("../.")
-	// The type of the config file
-	viper.SetConfigType("yml")
-	// Enable VIPER to read Environment Variables
-	viper.AutomaticEnv()
-
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Printf("viper error reading config file: %v", err)
-		panic("review the config.yml file.")
-	}
-
-	// Set undefined variables
-	//viper.SetDefault("database.dbname", "test_db")
-
-	err = viper.Unmarshal(&config)
-	if err != nil {
-		fmt.Printf("viper unable to decode into struct: %v", err)
-	}
-
-	// Reading variables using the model
-	fmt.Println("Reading variables using the model..")
-	fmt.Println("Database server is\t", config.Database.Server)
-	fmt.Println("Database name is\t", config.Database.Schema)
-	fmt.Println("Port is\t\t\t", config.Server.Port)
-	fmt.Println("Production is\t", config.Server.Production)
-	fmt.Println("RepMode is\t\t", config.RepMode)
-	fmt.Println("LogFile is\t\t", config.LogFile)
-
+	log.New(log.Writer(), "- AgendamentoService ", log.Flags()).Println("rodando os testes...")
 	code := m.Run()
 	os.Exit(code)
 }
 
 func TestBuscarAgendamento(t *testing.T) {
-	m := mock
-	l := log.New(log.Writer(), "TestBuscarAgendamentos", log.Flags())
+	m := NewMockAgendamentos()
+	l := log.New(log.Writer(), "TestBuscarAgendamentos ", log.Flags())
 	r := NewMockRepository(m, 4, *l)
 	if r == nil {
 		t.Error("fatal error opening mock db")
@@ -86,8 +47,8 @@ func TestBuscarAgendamento(t *testing.T) {
 }
 
 func TestListarAgendamentos(t *testing.T) {
-	m := mock
-	l := log.New(log.Writer(), "TestBuscarAgendamentos", log.Flags())
+	m := NewMockAgendamentos()
+	l := log.New(log.Writer(), "TestListarAgendamentos ", log.Flags())
 	r := NewMockRepository(m, 4, *l)
 	if r == nil {
 		t.Error("fatal error opening mock db")
@@ -106,8 +67,8 @@ func TestListarAgendamentos(t *testing.T) {
 }
 
 func TestInserirAgendamento(t *testing.T) {
-	m := mock
-	l := log.New(log.Writer(), "TestBuscarAgendamentos", log.Flags())
+	m := NewMockAgendamentos()
+	l := log.New(log.Writer(), "TestInserirAgendamento ", log.Flags())
 	r := NewMockRepository(m, 4, *l)
 	if r == nil {
 		t.Error("fatal error opening mock db")
@@ -127,8 +88,8 @@ func TestInserirAgendamento(t *testing.T) {
 }
 
 func TestAtualizarAgendamento(t *testing.T) {
-	m := mock
-	l := log.New(log.Writer(), "TestBuscarAgendamentos", log.Flags())
+	m := NewMockAgendamentos()
+	l := log.New(log.Writer(), "TestAtualizarAgendamento ", log.Flags())
 	r := NewMockRepository(m, 4, *l)
 	if r == nil {
 		t.Error("fatal error opening mock db")
@@ -154,8 +115,8 @@ func TestAtualizarAgendamento(t *testing.T) {
 }
 
 func TestDeletarAgendamento(t *testing.T) {
-	m := mock
-	l := log.New(log.Writer(), "TestBuscarAgendamentos", log.Flags())
+	m := NewMockAgendamentos()
+	l := log.New(log.Writer(), "TestDeletarAgendamento ", log.Flags())
 	r := NewMockRepository(m, 4, *l)
 	if r == nil {
 		t.Error("fatal error opening mock db")

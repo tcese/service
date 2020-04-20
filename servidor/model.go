@@ -37,3 +37,12 @@ type Perfil struct {
 	FlEnfermeiro    string `json:"sangue"`
 	FlAssistSocial  string `json:"doador"`
 }
+
+// Retorna uma lista de Servidores já povoada para testes
+func NewMockServidores() *Servidores {
+	return &Servidores{
+		Servidor{1, "João", "M", time.Now(), 1, 1, "3344", 1, "OK", "A+", "S", "X", "Rua Conselheiro...", "10", "Capucho", 1, 12240000},
+		Servidor{2, "João", "M", time.Now(), 1, 1, "3344", 1, "OK", "A+", "S", "X", "Rua Conselheiro...", "10", "Capucho", 1, 12240000},
+		Servidor{3, "João", "M", time.Now(), 1, 1, "3344", 1, "OK", "A+", "S", "X", "Rua Conselheiro...", "10", "Capucho", 1, 12240000},
+	}
+}

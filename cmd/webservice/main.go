@@ -68,7 +68,7 @@ func main() {
 	}
 
 	// Abrindo a conexão com a Base de Dados
-	if config.RepMode == "db" {
+	if config.RepMode == "msmsql" {
 		// Conectando com a Base de Dados
 		dataSource := fmt.Sprintf("server=%s;user id=%s;password=%s;", config.Database.Server, config.Database.User, config.Database.Password)
 		db, err = sql.Open("mssql", dataSource)
@@ -151,10 +151,7 @@ func main() {
 		case "mock":
 			ar = agendamento.NewMockRepository(agendamento.NewMockAgendamentos(), 0, *logger)
 		case "msmsql":
-			/*ar = agendamento.NewMsmsqlRepository(*db, *logger)
-			if ar == nil {
-				panic("fatal error opening msmsql db")
-			}*/
+			ar = agendamento.NewMsmsqlRepository(db, *logger)
 		default:
 			panic("parametro repomode utilizado nao suportado para o serviço: servidor")
 		}

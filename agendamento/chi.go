@@ -17,7 +17,7 @@ func NewChiController(
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		logger.Printf("-> agendamentos/")
 
-		a, err := service.ListarAgendamentos()
+		as, err := service.ListarAgendamentos()
 		if err != nil {
 			logger.Println(err)
 			w.WriteHeader(http.StatusNotFound)
@@ -25,9 +25,9 @@ func NewChiController(
 			return
 		}
 
-		logger.Printf("agendamentos encontrados: %d", len(a))
+		logger.Printf("agendamentos encontrados: %d", len(as))
 
-		if err := render.Render(w, r, NewAgendamentosResponse(&a)); err != nil {
+		if err := render.Render(w, r, NewAgendamentosResponse(&as)); err != nil {
 			logger.Println(err)
 			w.WriteHeader(http.StatusNotFound)
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)

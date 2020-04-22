@@ -24,11 +24,11 @@ func (i internalService) BuscarAgendamento(idAgendamento int64) (Agendamento, er
 }
 
 func (i internalService) ListarAgendamentos() (Agendamentos, error) {
-	a := Agendamentos{}
+	as := Agendamentos{}
 	i.logger.Printf("buscando servidores")
-	err := i.repository.ListarAgendamentos(&a)
-	i.logger.Printf("buscando servidores len: %d", len(a))
-	return a, err
+	err := i.repository.ListarAgendamentos(&as)
+	i.logger.Printf("buscando servidores len: %d", len(as))
+	return as, err
 }
 
 func (i internalService) InserirAgendamento(a *Agendamento) error {

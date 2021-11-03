@@ -1,0 +1,15 @@
+server:
+  port: 8080
+  production: false
+
+
+database:
+  server: ""
+  schema: ""
+  user: ""
+  password: ""
+
+
+
+repmode: mock
+logfile: "main-log.txt"

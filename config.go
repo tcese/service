@@ -4,7 +4,7 @@ package service
 type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
-	RepMode  string // Select mock over db
+	RepMode  string // Select mock or msmsql
 	LogFile  string // Name of the log file
 }
 

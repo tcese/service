@@ -15,25 +15,21 @@ func NewChiController(
 	r := chi.NewRouter()
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		logger.Printf("buscando servidores")
+		logger.Println("buscando servidores")
 
-		s, err := service.ListarServidores()
-		if err != nil {
+		ss, err := service.ListarServidores()
+		if err != nil { // || ss == nil
 			logger.Println(err)
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			http.Error(w, "erro ao buscar lista de servidores", http.StatusInternalServerError)
 			return
 		}
 
-		logger.Printf("encontrado servidores")
+		logger.Println("servidores encontrados: ", len(*ss))
+		logger.Printf("servidores: %v", ss)
 
-		// Assume if we've reach this far, we can access the article
-		// context because this handler is a child of the ArticleCtx
-		// middleware. The worst case, the recoverer middleware will save us.
-		//article := r.Context().Value("servidor").(*Servidor)
-		if err := render.Render(w, r, NewServidoresResponse(&s)); err != nil {
+		if err := render.Render(w, r, NewServidoresResponse(ss)); err != nil {
 			logger.Println(err)
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-			//render.Render(w, r, ErrRender(err))
 			return
 		}
 		w.WriteHeader(http.StatusOK)
@@ -41,12 +37,12 @@ func NewChiController(
 
 	r.Get("/{matricula}", func(w http.ResponseWriter, r *http.Request) {
 		matricula := chi.URLParam(r, "matricula")
-		logger.Printf("buscando servidor:%v", matricula)
+		logger.Println("buscando servidor: ", matricula)
 
 		m, err := strconv.ParseInt(matricula, 10, 64)
 		if err != nil {
 			logger.Println(err)
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			http.Error(w, "o parâmetro de matrícula informado deve ser um número inteiro", http.StatusBadRequest) // http.StatusText(http.StatusBadRequest)
 			return
 		}
 
@@ -57,13 +53,15 @@ func NewChiController(
 			return
 		}
 
-		logger.Printf("encontrado servidor: %v", s.Nome)
+		if s == nil {
+			logger.Println("servidor não encontrado com matricula: ", matricula)
+			http.Error(w, "servidor não encontrado com essa matrícula", http.StatusNotFound)
+			return
+		}
 
-		// Assume if we've reach this far, we can access the SErvidor
-		// context because this handler is a child of the ServidorCtx
-		// middleware. The worst case, the recoverer middleware will save us.
-		//article := r.Context().Value("servidor").(*Servidor)
-		if err := render.Render(w, r, NewServidorResponse(&s)); err != nil {
+		logger.Printf("encontrado servidor: %v", s)
+
+		if err := render.Render(w, r, NewServidorResponse(s)); err != nil {
 			logger.Println(err)
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			//render.Render(w, r, ErrRender(err))

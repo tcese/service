@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	_ "github.com/denisenkom/go-mssqldb"
 	"log"
+	"service/tools"
 )
 
 type msmsqlRepository struct {
@@ -21,45 +22,41 @@ func NewMsmsqlRepository(
 	return &msmsqlRepository{db: db, logger: logger}
 }
 
-func (m msmsqlRepository) BuscarServidor(matricula int64, s *Servidor) error {
-	m.logger.Printf("buscando servidor: %v", matricula)
-
-	rows, err := m.db.Query("SELECT TOP (1) [MATRICULA] FROM [dbSCM].[scm].[SCMFUNCIONARIOS] WHERE MATRICULA =  ?", matricula)
+func (m msmsqlRepository) BuscarServidor(matricula int64) (*Servidor, error) {
+	m.logger.Println("buscando servidor: ", matricula)
+	rows, err := m.db.Query("SELECT TOP (1) [MATRICULA], [NOME], [SEXO], [DTNASCIMENTO], [EMPRESA], [SETOR], [FONE], [FILIAL], [SITUACAO], [SANGUE], [DOADOR], [EC], [ENDERECO], [NUMERO], [BAIRRO], [CIDADE], [CEP] FROM [dbSCM].[scm].[SCMFUNCIONARIOS] WHERE MATRICULA =  ?", matricula)
 	if err != nil {
-		m.logger.Println("Cannot query: ", err.Error())
-		return err
+		return nil, &tools.DataBaseError{err}
 	}
 	defer rows.Close()
 	for rows.Next() {
-		err = rows.Scan(&s.Matricula)
+		s := &Servidor{}
+		err = rows.Scan(&s.Matricula, &s.Nome, &s.Sexo, &s.Dtnascimento, &s.Empresa, &s.Setor, &s.Fone, &s.Filial, &s.Situacao, &s.Sangue, &s.Doador, &s.Ec, &s.Endereco, &s.Numero, &s.Bairro, &s.Cidade, &s.Cep)
 		if err != nil {
-			m.logger.Println("error scanning: ", err)
-			continue
+			return nil, &tools.DataBaseError{err}
 		}
-		m.logger.Println("Servidor encontrado: ", s.Matricula)
+		return s, nil // Servidor encontrado
 	}
-
-	return nil
+	return nil, &tools.EntityNotFoundError{} // Servidor não encontrado
 }
 
-func (m msmsqlRepository) ListarServidores(s *Servidores) error {
-	m.logger.Println("mock buscando servidores ...")
-
-	rows, err := m.db.Query("SELECT s.MATRICULA FROM s dbSCM.SCMFUNCIONARIOS")
+func (m msmsqlRepository) ListarServidores() (*Servidores, error) {
+	m.logger.Println("buscando lista de servidores ...")
+	rows, err := m.db.Query("SELECT TOP (10) [MATRICULA], [NOME], [SEXO], [DTNASCIMENTO], [EMPRESA], [SETOR], [FONE], [FILIAL], [SITUACAO], [SANGUE], [DOADOR], [EC], [ENDERECO], [NUMERO], [BAIRRO], [CIDADE], [CEP] FROM [dbSCM].[scm].[SCMFUNCIONARIOS]") // SELECT s.MATRICULA FROM s dbSCM.SCMFUNCIONARIOS
 	if err != nil {
-		m.logger.Println("Cannot query: ", err.Error())
-		return err
+		return nil, &tools.DataBaseError{err}
 	}
 	defer rows.Close()
+
+	ss := &Servidores{}
 	for rows.Next() {
-		var val []interface{}
-		err = rows.Scan(val...)
+		s := Servidor{}
+		err = rows.Scan(&s.Matricula, &s.Nome, &s.Sexo, &s.Dtnascimento, &s.Empresa, &s.Setor, &s.Fone, &s.Filial, &s.Situacao, &s.Sangue, &s.Doador, &s.Ec, &s.Endereco, &s.Numero, &s.Bairro, &s.Cidade, &s.Cep)
 		if err != nil {
-			m.logger.Println(err)
-			continue
+			return nil, &tools.DataBaseError{err}
 		}
-		m.logger.Println(val)
+		*ss = append(*ss, s)
 	}
 
-	return nil
+	return ss, nil
 }
